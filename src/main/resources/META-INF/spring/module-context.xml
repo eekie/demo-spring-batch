@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+	<description>Example job to get you started. It provides a
+		skeleton for a typical batch application.</description>
+
+	<job id="importJob" xmlns="http://www.springframework.org/schema/batch" incrementer="jobParametersIncrementer">
+		<step id="importStep" parent="simpleStep">
+			<tasklet>
+				<chunk reader="scrapeDataFlatFileReader" writer="scrapeDataWriter">
+				</chunk>
+			</tasklet>
+		</step>
+	</job>
+
+	<job id="job1" xmlns="http://www.springframework.org/schema/batch" incrementer="jobParametersIncrementer">
+		<step id="step1" parent="simpleStep">
+			<tasklet>
+				<chunk reader="crawledDatasetReader" processor="splitAddressProcessor"
+				 writer="writerWrapper">
+				</chunk>
+			</tasklet>
+		</step>
+	</job>
+	<bean id="splitAddressProcessor" class="be.jarchitects.springbatch.processor.SplitAddressProcessor" />
+	<bean id="writer" class="be.jarchitects.springbatch.writer.ConsoleOutputItemWriter" />
+	
+	<!-- enables the functionality of JobOperator.startNextInstance(jobName) -->
+	<bean id="jobParametersIncrementer" class="org.springframework.batch.core.launch.support.RunIdIncrementer" />
+
+	<bean id="simpleStep"
+		class="org.springframework.batch.core.step.item.SimpleStepFactoryBean"
+		abstract="true">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="jobRepository" ref="jobRepository" />
+		<property name="startLimit" value="100" />
+		<property name="commitInterval" value="1000" />
+	</bean>
+	
+	<bean id="crawledDatasetReader"
+	    class="be.jarchitects.springbatch.reader.JdbcScrapeDataReader">
+	    <property name="dataSource" ref="dataSource" />
+	    <property name="rowMapper">
+	        <bean class="be.jarchitects.springbatch.model.ScrapeRecordRowMapper" />
+	    </property>
+	    <property name="sql">
+	        <value><![CDATA[
+	            SELECT CUSTOMER_ID, COMPANY_NAME, ADDRESS
+				FROM SCRAPE_DATA
+	        ]]></value>
+	    </property>
+	</bean>
+
+	<bean id="itemWriter" class="org.springframework.batch.item.file.FlatFileItemWriter">
+	    <!-- <property name="resource" ref="outputResource" />  -->
+	    <property name="lineAggregator">
+	        <bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+	            <property name="delimiter" value=","/>
+	            <property name="fieldExtractor">
+	                <bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+	                    <property name="names" value="customerId,companyName,address"/>
+	                </bean>
+	            </property>
+	        </bean>
+	    </property>
+	</bean>
+	
+	<bean id="writerWrapper" class="org.springframework.batch.item.file.MultiResourceItemWriter">
+  		<property name="delegate" ref="itemWriter" />
+  		<property name="itemCountLimitPerResource" value="1000" />
+  		<property name="resource" value="file:target/output.txt" />
+	</bean>
+
+ 	<bean id="scrapeDataFlatFileReader" class="org.springframework.batch.item.file.FlatFileItemReader" scope="step">
+		<property name="resource" value="file:/#{jobParameters[inputFile]}" />
+		<property name="encoding" value="utf-8"/>
+		<property name="linesToSkip" value="1"/>
+		<property name="lineMapper">
+			<bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="delimiter" value=","/>
+						<property name="names" value=",customer_id,,,company_name,address,email,telephone,fax,opening_hours,categories,url,snippet,verified,external_id,," />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean class="be.jarchitects.springbatch.model.ScrapeRecordFieldSetMapper" >
+						<!-- <property name="invalidFinDataWriter" ref="invalidFinDataWriter" /> -->
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+	
+	<bean id="scrapeDataWriter" class="be.jarchitects.springbatch.writer.ScrapeRecordWriter">
+		<property name="dao" ref="scrapeRecordDao" />
+	</bean>
+	
+	<bean id="scrapeRecordDao" class="be.jarchitects.dao.JdbcScrapeRecordDao"
+		p:dataSource-ref="dataSource">
+		<property name="incrementer">
+			<bean parent="incrementerParent">
+				<property name="incrementerName" value="SCRAPE_DATA_SEQ" />
+			</bean>
+		</property>
+	</bean>
+	
+	<bean id="sequenceIncrementerParent" class="${database.incrementer.class}" abstract="true">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<bean id="columnIncrementerParent" class="${database.incrementer.class}" abstract="true" parent="sequenceIncrementerParent">
+		<property name="columnName" value="ID" />
+	</bean>
+	
+	<bean id="incrementerParent" parent="${database.incrementer.parent}">
+		<property name="incrementerName" value="DUMMY"/>
+	</bean>
+	
+</beans>
