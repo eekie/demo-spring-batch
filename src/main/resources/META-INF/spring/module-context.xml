@@ -17,11 +17,11 @@
 		</step>
 	</job>
 
-	<job id="job1" xmlns="http://www.springframework.org/schema/batch" incrementer="jobParametersIncrementer">
+	<job id="processJob" xmlns="http://www.springframework.org/schema/batch" incrementer="jobParametersIncrementer">
 		<step id="step1" parent="simpleStep">
 			<tasklet>
 				<chunk reader="crawledDatasetReader" processor="splitAddressProcessor"
-				 writer="writerWrapper">
+				 writer="scrapeDataUpdateWriter">
 				</chunk>
 			</tasklet>
 		</step>
@@ -49,7 +49,7 @@
 	    </property>
 	    <property name="sql">
 	        <value><![CDATA[
-	            SELECT CUSTOMER_ID, COMPANY_NAME, ADDRESS
+	            SELECT ID, CUSTOMER_ID, COMPANY_NAME, ADDRESS, OPENING_HOURS, TELEPHONE, URL, CATEGORIES
 				FROM SCRAPE_DATA
 	        ]]></value>
 	    </property>
@@ -62,7 +62,7 @@
 	            <property name="delimiter" value=","/>
 	            <property name="fieldExtractor">
 	                <bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
-	                    <property name="names" value="customerId,companyName,address"/>
+	                    <property name="names" value="customerId,companyName,postalCode"/>
 	                </bean>
 	            </property>
 	        </bean>
@@ -97,6 +97,10 @@
 	</bean>
 	
 	<bean id="scrapeDataWriter" class="be.jarchitects.springbatch.writer.ScrapeRecordWriter">
+		<property name="dao" ref="scrapeRecordDao" />
+	</bean>
+
+	<bean id="scrapeDataUpdateWriter" class="be.jarchitects.springbatch.writer.ScrapeRecordUpdateWriter">
 		<property name="dao" ref="scrapeRecordDao" />
 	</bean>
 	

@@ -17,11 +17,14 @@ public class SplitAddressProcessor implements
 	
 	@Override
 	public ScrapeRecord process(ScrapeRecord item) throws Exception {
-		log.info(String.format("processing address: %s", item.getAddress()));
+		//log.info(String.format("processing address: %s", item.getAddress()));
 		Matcher m = p.matcher(item.getAddress());
 		if (m.find()) {
+			item.setStreet(m.group(1));
+			item.setHouseNumber(m.group(2));
+			item.setPostalCode(m.group(3));
 			item.setCity(m.group(4));
-			log.info(String.format("match: %s", m.group(4)));
+			log.info(String.format("match: %s", m.group(3)));
 		}
 		return item;
 	}

@@ -8,7 +8,7 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.springframework.batch.core.launch.support.CommandLineJobRunner"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="classpath:/launch-context.xml importJob inputFile=//Users/tom/repos/workshop-spring-batch/scrape_data.csv run=3"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="classpath:/launch-context.xml processJob inputFile=//Users/tom/repos/workshop-spring-batch/scrape_data.csv run=5"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="workshop-spring-batch"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

@@ -1,9 +1,13 @@
 package be.jarchitects.springbatch.model;
 public class ScrapeRecord {
+	private Long id;
 	private String customerId;
 	private String companyName;
 	private String address;
 	private String city;
+	private String street;
+	private String houseNumber;
+	private String postalCode;
 	private String openingHours;
 	private String categories;
 	private String telephone;
@@ -13,6 +17,7 @@ public class ScrapeRecord {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("ScrapeRecord=");
+        sb.append("{id=").append(id);
         sb.append("{custId='").append(customerId).append('\'');
         sb.append(", compName='").append(companyName).append('\'');
         sb.append(", city='").append(city).append('\'');
@@ -83,4 +88,36 @@ public class ScrapeRecord {
 	public void setUrl(String url) {
 		this.url = url;
 	}
+	public String getStreet() {
+		return street;
+	}
+
+	public void setStreet(String street) {
+		this.street = street;
+	}
+
+	public String getHouseNumber() {
+		return houseNumber;
+	}
+
+	public void setHouseNumber(String houseNumber) {
+		this.houseNumber = houseNumber;
+	}
+
+	public String getPostalCode() {
+		return postalCode;
+	}
+
+	public void setPostalCode(String postalCode) {
+		this.postalCode = postalCode;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
 }

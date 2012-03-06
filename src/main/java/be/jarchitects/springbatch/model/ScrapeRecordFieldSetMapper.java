@@ -17,6 +17,7 @@ public class ScrapeRecordFieldSetMapper implements FieldSetMapper<ScrapeRecord> 
 		scrapeRecord.setTelephone(fieldSet.readString("telephone"));
 		scrapeRecord.setCategories(fieldSet.readString("categories"));
 		scrapeRecord.setUrl(fieldSet.readString("url"));
+		scrapeRecord.setOpeningHours(fieldSet.readString("opening_hours"));
 		return scrapeRecord;
 	}
 
