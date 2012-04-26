@@ -54,4 +54,17 @@
 		<property name="order" value="1" />
 	</bean>
 	
+	<bean id="jobLoader" class="org.springframework.batch.core.configuration.support.AutomaticJobRegistrar">
+		<property name="applicationContextFactories">
+			<bean class="org.springframework.batch.core.configuration.support.ClasspathXmlApplicationContextsFactoryBean">
+				<property name="resources" value="${JOBRESOURCES:file:./jobs/*Job.xml}" />
+			</bean>
+		</property>
+		<property name="jobLoader">
+			<bean class="org.springframework.batch.core.configuration.support.DefaultJobLoader">
+				<property name="jobRegistry" ref="jobRegistry" />
+			</bean>
+		</property>
+	</bean>
+	
 </beans>

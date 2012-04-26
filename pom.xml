@@ -13,9 +13,20 @@
 		CommandLineJobRunner directly or with "java -jar launch-context.xml job1".</description>
 	<properties>
 		<maven.test.failure.ignore>true</maven.test.failure.ignore>
-		<spring.framework.version>2.5.6</spring.framework.version>
+		<spring.framework.version>3.1.1.RELEASE</spring.framework.version>
 		<spring.batch.version>2.1.8.RELEASE</spring.batch.version>
 	</properties>
+	<scm>
+		<url>https://github.com/eekie/demo-spring-batch</url>
+		<connection>scm:git:git://github.com/eekie/demo-spring-batch.git</connection>
+		<developerConnection>scm:git:git://github.com/eekie/demo-spring-batch.git</developerConnection>
+	</scm>
+	<licenses>
+		<license>
+			<name>Apache 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -236,4 +247,9 @@
 			</properties>
 		</profile>
 	</profiles>
+	<inceptionYear>2012</inceptionYear>
+	<issueManagement>
+		<system>github</system>
+		<url>https://github.com/eekie/demo-spring-batch/issues</url>
+	</issueManagement>
 </project>

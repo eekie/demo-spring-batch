@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+	<job id="partitionJdbcJob" xmlns="http://www.springframework.org/schema/batch">
+		<step id="step">
+			<partition step="step1" partitioner="partitioner">
+				<handler grid-size="${batch.grid.size}" task-executor="taskExecutor"/>
+			</partition>
+		</step>
+	</job>
+
+	<bean id="partitioner" class="be.jarchitects.springbatch.common.ColumnRangePartitioner">
+		<property name="dataSource" ref="dataSource" />
+		<property name="table" value="SCRAPE_DATA" />
+		<property name="column" value="ID" />
+	</bean>
+
+	<bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor" />
+	
+	<step id="step1" xmlns="http://www.springframework.org/schema/batch">
+		<tasklet>
+			<chunk writer="itemWriter" reader="itemReader" processor="itemProcessor" commit-interval="100" />
+			<listeners>
+				<listener ref="fileNameListener" />
+			</listeners>
+		</tasklet>
+	</step>
+
+	<bean id="fileNameListener" class="be.jarchitects.springbatch.common.OutputFileListener" scope="step">
+		<property name="path" value="file:./target/output/jdbc/" />
+	</bean>
+
+	<bean id="itemReader" scope="step" autowire-candidate="false" class="org.springframework.batch.item.database.JdbcPagingItemReader">
+		<property name="dataSource" ref="dataSource" />
+		<property name="rowMapper">
+			<bean class="be.jarchitects.springbatch.model.ScrapeRecordRowMapper" />
+		</property>
+		<property name="queryProvider">
+			<bean class="org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean">
+				<property name="dataSource" ref="dataSource"/>
+				<property name="fromClause" value="SCRAPE_DATA"/>
+				<property name="selectClause" value="ID,CUSTOMER_ID,COMPANY_NAME, ADDRESS, OPENING_HOURS, TELEPHONE, URL, CATEGORIES"/>
+				<property name="sortKey" value="ID"/>
+				<property name="whereClause" value="ID &gt;= :minId and ID &lt;= :maxId"/>
+			</bean>
+		</property>
+		<property name="parameterValues">
+			<map>
+				<entry key="minId" value="#{stepExecutionContext[minValue]}"/>
+				<entry key="maxId" value="#{stepExecutionContext[maxValue]}"/>
+			</map>
+		</property>
+	</bean>
+
+	<bean id="outputTestReader" class="org.springframework.batch.item.file.MultiResourceItemReader" scope="prototype">
+		<property name="resources" value="file:target/output/jdbc/*.csv" />
+		<property name="delegate" ref="testItemReader" />
+	</bean>
+
+	<bean id="testItemReader" class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="lineMapper">
+			<bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<property name="lineTokenizer">
+					<bean class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<property name="delimiter" value="," />
+						<property name="names" value="id,customer_id,company_name,address,opening_hours,telephone,url,categories" />
+					</bean>
+				</property>
+				<property name="fieldSetMapper">
+					<bean class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper">
+						<property name="targetType" value="be.jarchitects.springbatch.model.ScrapeRecordFieldSetMapper" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="inputTestReader" class="org.springframework.batch.item.database.JdbcCursorItemReader">
+		<property name="sql">
+			<value>
+                <![CDATA[
+                    select ID, CUSTOMER_ID,COMPANY_NAME, ADDRESS, OPENING_HOURS, TELEPHONE, URL, CATEGORIES from SCRAPE_DATA
+                ]]>
+			</value>
+		</property>
+		<property name="dataSource" ref="dataSource" />
+		<property name="verifyCursorPosition" value="${batch.verify.cursor.position}"/>
+		<property name="rowMapper">
+			<bean class="be.jarchitects.springbatch.model.ScrapeRecordRowMapper" />
+		</property>
+	</bean>
+
+	<bean id="itemProcessor" class="be.jarchitects.springbatch.processor.SplitAddressProcessor" />
+
+	<bean id="itemWriter" class="org.springframework.batch.item.file.FlatFileItemWriter" scope="step">
+		<property name="resource" value="#{stepExecutionContext[outputFile]}" />
+		<property name="lineAggregator">
+			<bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+				<property name="delimiter" value="," />
+				<property name="fieldExtractor">
+					<bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+						<property name="names" value="id,customerId,companyName, address, postalCode" />
+					</bean>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+</beans>
